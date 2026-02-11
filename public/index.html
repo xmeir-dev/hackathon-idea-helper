@@ -74,7 +74,7 @@
   .idea-nav .nav-arrow:hover { color: #ccc; }
   .idea-nav .nav-arrow:disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
   .skel-line { background: #2a2a3a; border-radius: 6px; animation: shimmer 1.2s ease-in-out infinite; }
-  @keyframes shimmer { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+  @keyframes shimmer { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
   .idea-card { background: #1a1a2e; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; transition: border-color 0.2s; animation: fadeIn 0.35s ease; }
   .idea-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
   .idea-card .desc { color: #aaa; font-size: 0.85rem; line-height: 1.5; margin-bottom: 14px; }
@@ -250,11 +250,11 @@ const QUESTIONS = [
     'Real estate', 'HR / recruiting', 'Security', 'Agriculture',
     'Travel', 'Food / restaurant', 'Fitness / sports', 'Science / research'
   ]},
-  { id: 'vibe', text: 'What kind of project excites you most?', type: 'cards', options: [
-    { value: 'demo', icon: '\u{1F3AA}', label: 'Fun to demo', desc: 'Wow factor, visual, interactive' },
-    { value: 'useful', icon: '\u{1F6E0}', label: 'Genuinely useful', desc: 'Solves a real problem' },
-    { value: 'technical', icon: '\u26A1', label: 'Technically deep', desc: 'Impressive engineering' },
-    { value: 'impact', icon: '\u{1F30D}', label: 'Social impact', desc: 'Helps people or communities' }
+  { id: 'ai_usage', text: 'How do you want to use AI in the project?', type: 'multi', options: [
+    'LLM text generation', 'Document analysis', 'Image / vision',
+    'Classification / scoring', 'Summarization', 'Code generation',
+    'Conversational UI (chat)', 'Search / retrieval (RAG)', 'Translation',
+    'Audio / speech', 'Recommendation engine', 'Data extraction'
   ]},
   { id: 'scope', text: 'How ambitious do you want to go?', type: 'cards', options: [
     { value: 'simple', icon: '\u{1F3AF}', label: 'Keep it tight', desc: 'Polished & focused' },
@@ -268,11 +268,11 @@ const QUESTIONS = [
     { value: 2, icon: '\u{1F513}', label: 'Breaks barriers', desc: 'Democratize access' },
     { value: 3, icon: '\u{1F9E0}', label: 'Amplifies judgment', desc: 'Human-in-the-loop AI' }
   ]},
-  { id: 'ai_usage', text: 'How do you want to use AI in the project?', type: 'multi', options: [
-    'LLM text generation', 'Document analysis', 'Image / vision',
-    'Classification / scoring', 'Summarization', 'Code generation',
-    'Conversational UI (chat)', 'Search / retrieval (RAG)', 'Translation',
-    'Audio / speech', 'Recommendation engine', 'Data extraction'
+  { id: 'vibe', text: 'What kind of project excites you most?', type: 'cards', options: [
+    { value: 'demo', icon: '\u{1F3AA}', label: 'Fun to demo', desc: 'Wow factor, visual, interactive' },
+    { value: 'useful', icon: '\u{1F6E0}', label: 'Genuinely useful', desc: 'Solves a real problem' },
+    { value: 'technical', icon: '\u26A1', label: 'Technically deep', desc: 'Impressive engineering' },
+    { value: 'impact', icon: '\u{1F30D}', label: 'Social impact', desc: 'Helps people or communities' }
   ]},
   { id: 'freeform', text: 'Anything else we should know?', type: 'freeform', placeholder: 'e.g. I have access to a medical dataset, we want something fun to demo on stage, I am really into music production, we already have an idea about legal tech...' }
 ];
@@ -489,7 +489,7 @@ function renderIdeas() {
   arrows[1].disabled = currentIdeaIdx >= maxIdx;
 
   if (currentIdeaIdx >= allIdeas.length || !allIdeas[currentIdeaIdx]) {
-    container.innerHTML = `<div style="text-align:center;margin-bottom:20px"><p style="color:#ccc;font-size:1.1rem;font-weight:600;margin-bottom:4px;animation:shimmer 1.2s ease-in-out infinite">Generating ideas</p><p style="color:#666;font-size:0.85rem">Claude is crafting tailored ideas based on your profile</p></div><div class="idea-card skeleton">
+    container.innerHTML = `<div style="text-align:center;margin-bottom:20px"><p style="color:#ccc;font-size:1.1rem;font-weight:600;margin-bottom:4px;animation:shimmer 2s ease-in-out infinite">Generating ideas</p><p style="color:#666;font-size:0.85rem">Claude is crafting tailored ideas based on your profile</p></div><div class="idea-card skeleton">
       <div class="skel-line" style="width:100px;height:22px;margin-bottom:12px"></div>
       <div class="skel-line" style="width:70%;height:20px;margin-bottom:16px"></div>
       <div class="skel-line" style="width:100%;height:14px;margin-bottom:6px"></div>
