@@ -42,6 +42,8 @@ app.post('/api/generate-stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
