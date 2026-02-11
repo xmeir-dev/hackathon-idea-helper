@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💡</text></svg>">
+<title>Hackathon Idea Helper</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f0f1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; padding: 30px 0 20px; margin-bottom: 30px; }
+  header h1 { font-size: 1.8rem; color: #ffffff; margin-bottom: 6px; }
+  header p { color: #888; font-size: 0.9rem; }
+
+  .phase-bar { display: flex; justify-content: center; margin-bottom: 30px; font-size: 0.85rem; color: #555; border: 1px solid #2a2a3a; border-radius: 10px; overflow: hidden; background: #1a1a2a; }
+  .phase-bar span { flex: 1; text-align: center; padding: 12px 0; position: relative; transition: color 0.3s; cursor: pointer; }
+  .phase-bar span + span { border-left: 1px solid #2a2a3a; }
+  .phase-bar span::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: transparent; transition: background 0.3s; }
+  .phase-bar span.active { color: #7c5cff; font-weight: 600; }
+  .phase-bar span.active::after { background: #7c5cff; }
+  .phase-bar span.done { color: #7c5cff; }
+  .phase-bar span.done::after { background: #7c5cff; }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .interview-wrap { min-height: 340px; display: flex; flex-direction: column; align-items: center; padding-bottom: 80px; }
+  .interview-progress { display: none; }
+  .interview-progress-fill { height: 100%; background: linear-gradient(90deg, #7c5cff, #ff6b6b); border-radius: 2px; transition: width 0.4s ease; }
+  .q-number { font-size: 0.75rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+  .q-text { font-size: 1.4rem; font-weight: 600; text-align: center; margin-bottom: 30px; line-height: 1.4; }
+  .q-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 650px; margin-bottom: 30px; }
+
+  .chip { padding: 10px 20px; border-radius: 24px; border: 1.5px solid #3a3a4a; cursor: pointer; font-size: 0.9rem; transition: all 0.15s; user-select: none; background: transparent; color: #ccc; }
+  .chip:hover { border-color: #7c5cff; background: #7c5cff11; }
+  .chip.selected { background: #7c5cff33; border-color: #7c5cff; color: #c4b5ff; }
+  .chip.freeform-chip { border-style: dashed; padding: 0 20px; display: inline-flex; align-items: center; height: 42px; }
+  .chip.freeform-chip:focus-within { border-color: #7c5cff; background: #7c5cff11; }
+
+  .choice-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 30px; max-width: 80vw; width: 640px; }
+  .choice-card { padding: 30px 40px; border-radius: 14px; border: 2px solid #2a2a3a; background: #1a1a2a; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .choice-card .card-label { font-size: 1.1rem; font-weight: 600; }
+  .choice-card .card-desc { font-size: 0.8rem; color: #888; margin-top: 4px; }
+  .choice-card:hover { border-color: #7c5cff; }
+  .choice-card.selected { border-color: #7c5cff; background: #7c5cff22; }
+  .choice-card .card-icon { font-size: 2rem; margin-bottom: 10px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+
+  .q-nav { display: flex; gap: 14px; justify-content: center; position: fixed; bottom: 50px; left: 0; right: 0; padding: 16px 20px; z-index: 50; }
+  .q-nav .btn { padding: 16px 80px; font-size: 1rem; border-radius: 12px; }
+
+  .btn { padding: 10px 24px; border-radius: 8px; border: none; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: #7c5cff; color: #fff; }
+  .btn-primary:hover { background: #6a4aee; }
+  .btn-secondary { background: #2a2a3a; color: #ccc; }
+  .btn-secondary:hover { background: #3a3a4a; }
+  .btn-success { background: #4caf50; color: #fff; }
+  .btn-success:hover { background: #3d9142; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+  textarea, input[type="text"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #3a3a4a; background: #1a1a2a; color: #e0e0e0; font-size: 0.9rem; font-family: inherit; resize: vertical; }
+  textarea:focus, input[type="text"]:focus { outline: none; border-color: #7c5cff; }
+
+  .idea-counter { text-align: center; color: #888; font-size: 0.85rem; margin-bottom: 14px; }
+  .idea-nav { display: flex; align-items: center; gap: 14px; justify-content: center; margin-bottom: 14px; }
+  .idea-nav .nav-arrow { background: none; border: none; color: #888; cursor: pointer; font-size: 1rem; padding: 4px 8px; transition: all 0.2s; line-height: 1; display: flex; align-items: center; }
+  .idea-nav .nav-arrow:hover { color: #ccc; }
+  .idea-nav .nav-arrow:disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+  .skel-line { background: #2a2a3a; border-radius: 6px; animation: shimmer 1.2s ease-in-out infinite; }
+  @keyframes shimmer { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+  .idea-card { background: #1a1a2e; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; transition: border-color 0.2s; animation: fadeIn 0.35s ease; }
+  .idea-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+  .idea-card .desc { color: #aaa; font-size: 0.85rem; line-height: 1.5; margin-bottom: 14px; }
+  .idea-card .tech { color: #888; font-size: 0.8rem; margin-bottom: 14px; }
+  .idea-card .tech span { background: #2a2a3a; padding: 2px 8px; border-radius: 4px; margin-right: 4px; }
+
+  .scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+  .score-item { background: #12121f; padding: 10px; border-radius: 8px; text-align: center; position: relative; cursor: default; }
+  .score-item .label { font-size: 0.75rem; color: #888; margin-bottom: 4px; }
+  .score-item .stars { color: #ffd700; font-size: 1rem; letter-spacing: 1px; }
+  .score-item .tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #222240; border: 1px solid #3a3a5a; border-radius: 8px; padding: 8px 12px; font-size: 0.75rem; color: #ccc; line-height: 1.4; width: 220px; z-index: 10; pointer-events: none; }
+  .score-item:hover .tooltip { display: block; }
+  .undo-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2a2a3a; border: 1px solid #3a3a5a; border-radius: 10px; padding: 12px 20px; display: flex; align-items: center; gap: 12px; z-index: 300; animation: fadeIn 0.3s ease; font-size: 0.85rem; color: #ccc; }
+  .undo-toast .btn { font-size: 0.8rem; padding: 4px 14px; }
+
+  .idea-actions { display: flex; justify-content: space-between; }
+  .idea-actions .btn { font-size: 0.8rem; padding: 6px 14px; }
+
+  .ps-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-bottom: 10px; }
+  .ps-1 { background: #2a1f4e; color: #b39dff; }
+  .ps-2 { background: #1f3a2e; color: #7dcea0; }
+  .ps-3 { background: #3a2a1f; color: #f0b27a; }
+
+  .shortlist-panel { position: fixed; top: 0; right: -350px; width: 340px; height: 100vh; background: #16162a; border-left: 1px solid #2a2a3a; padding: 20px; overflow-y: auto; transition: right 0.3s; z-index: 100; }
+  .shortlist-panel.open { right: 0; }
+  .shortlist-toggle { position: fixed; top: 20px; right: 20px; z-index: 99; padding: 8px 16px; border-radius: 20px; border: 1px solid #3a3a4a; background: #1a1a2a; color: #ccc; cursor: pointer; font-size: 0.85rem; }
+  .shortlist-toggle .count { background: #7c5cff; color: #fff; border-radius: 50%; padding: 1px 7px; font-size: 0.75rem; margin-left: 4px; }
+  .shortlist-item { background: #1e1e35; padding: 12px; border-radius: 8px; margin-bottom: 10px; position: relative; }
+  .shortlist-item h4 { font-size: 0.9rem; margin-bottom: 4px; }
+  .shortlist-item .mini-scores { font-size: 0.75rem; color: #888; }
+  .shortlist-item .remove-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #666; cursor: pointer; font-size: 1rem; }
+  .shortlist-item .remove-btn:hover { color: #ff4444; }
+  .overlay { display: none; position: fixed; inset: 0; background: #00000066; z-index: 98; }
+  .overlay.open { display: block; }
+
+  .btn-ghost { background: transparent; border: 1px solid #3a3a4a; color: #888; }
+  .btn-ghost:hover { border-color: #7c5cff; color: #ccc; }
+  .modal-overlay { position: fixed; inset: 0; background: #000000aa; z-index: 200; display: flex; align-items: center; justify-content: center; }
+  .modal { background: #1a1a2e; border: 1px solid #2a2a3a; border-radius: 14px; padding: 24px; width: 90%; max-width: 480px; }
+
+  .summary-card { background: #1a1a2e; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .summary-card .rank { font-size: 2rem; font-weight: 800; color: #7c5cff; float: left; margin-right: 16px; line-height: 1; }
+  .total-score { font-size: 1.5rem; font-weight: 700; color: #ffd700; }
+
+  .info-box { background: #1a1a2e; border-left: 3px solid #7c5cff; padding: 14px 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.85rem; color: #aaa; line-height: 1.5; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-bar .btn { font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; }
+  .filter-bar .btn.active { background: #7c5cff; color: #fff; }
+  .idea-count { color: #666; font-size: 0.8rem; margin-bottom: 14px; }
+
+  .loading-wrap { text-align: center; padding: 60px 20px; }
+  .loading-wrap .spinner { width: 40px; height: 40px; border: 3px solid #2a2a3a; border-top-color: #7c5cff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-wrap p { color: #888; font-size: 0.9rem; }
+  .loading-wrap .loading-sub { color: #555; font-size: 0.8rem; margin-top: 6px; }
+  .error-box { background: #2a1a1a; border: 1px solid #ff444466; border-radius: 8px; padding: 12px 16px; color: #ff8888; font-size: 0.85rem; margin-bottom: 16px; }
+
+  @media (max-width: 600px) {
+    .scores { grid-template-columns: 1fr; }
+    .shortlist-panel { width: 100%; right: -100%; }
+    .q-text { font-size: 1.15rem; }
+    .choice-card { min-width: 130px; padding: 14px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Hackathon Idea Helper</h1>
+    <p>Powered by Claude Opus 4.6</p>
+  </header>
+
+  <div class="phase-bar">
+    <span class="active" id="phase-interview">Interview</span>
+    <span id="phase-explore" onclick="if(allIdeas.length)showSection('explore')">Explore ideas</span>
+    <span id="phase-shortlist" onclick="goToSummary()">Shortlist (<span id="shortlist-count">0</span>)</span>
+  </div>
+
+  <div class="section active" id="sec-interview">
+    <div class="interview-wrap">
+      <div class="interview-progress"><div class="interview-progress-fill" id="progress-fill"></div></div>
+      <div class="q-number" id="q-number"></div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-body"></div>
+      <div class="q-nav" id="q-nav"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-explore">
+    <div class="idea-nav" id="idea-nav" style="display:none">
+      <button class="nav-arrow" onclick="prevIdea()">&#8249;</button>
+      <span class="idea-counter" id="idea-counter"></span>
+      <button class="nav-arrow" onclick="nextIdea()">&#8250;</button>
+    </div>
+    <div id="ideas-container"></div>
+    <div id="ideas-bottom-actions" style="display:none;justify-content:center;gap:12px;margin-top:20px"></div>
+  </div>
+
+  <div class="section" id="sec-summary">
+    <h2>Your Shortlisted Ideas</h2>
+    <p style="color:#888;font-size:0.85rem;margin-bottom:20px">Ranked by total score across all three categories</p>
+    <div id="summary-container"></div>
+    <div class="btn-row" style="margin-top:30px">
+      <button class="btn btn-secondary" onclick="showSection('explore')">&larr; Back to Ideas</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="custom-modal" style="display:none" onclick="if(event.target===this)closeCustomModal()">
+  <div class="modal">
+    <h3 style="margin-bottom:16px">Enter your own idea</h3>
+    <textarea id="custom-desc" rows="4" placeholder="Describe your idea, e.g. an app that translates legal contracts into plain language"></textarea>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeCustomModal()">Cancel</button>
+      <button class="btn btn-primary" id="custom-score-btn" onclick="scoreCustomIdea()">Add idea</button>
+    </div>
+  </div>
+</div>
+<footer style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:8px;font-size:12px;color:#555;opacity:0.7">Built by <a href="https://github.com/xmeir-dev" target="_blank" style="color:#555;text-decoration:none">Meir</a></footer>
+<div class="undo-toast" id="undo-toast" style="display:none">
+  <span>Idea dismissed</span>
+  <button class="btn btn-primary" onclick="undoDismiss()">Undo</button>
+</div>
+
+<script>
+let shortlist = [];
+let allIdeas = [];
+let currentIdeaIdx = 0;
+let totalExpected = 15;
+let isGenerating = false;
+let currentQ = 0;
+const answers = {};
+
+const HACKATHON_CONTEXT = `You are helping a hackathon participant find the perfect project idea.
+
+HACKATHON RULES:
+- Open Source: Everything must be fully open source (backend, frontend, models, everything)
+- New Work Only: All projects started from scratch during the hackathon
+- Team Size: Up to 2 members
+- Each person has $500 in Anthropic API credits
+- Banned: Projects violating legal/ethical/platform policies or using unauthorized code/data/assets
+
+PROBLEM STATEMENTS (each idea must be scored 1-5 on ALL THREE):
+
+PS1 - "Build a Tool That Should Exist": Create the AI-native app or workflow you wish someone had already built. Eliminate busywork. Make hard things effortless.
+
+PS2 - "Break the Barriers": Expert knowledge, essential tools, AI benefits — take something powerful locked behind expertise, cost, language, or infrastructure and put it in everyone's hands.
+
+PS3 - "Amplify Human Judgment": Build AI that makes researchers, professionals, and decision-makers dramatically more capable — without taking them out of the loop. The best AI doesn't replace human expertise. It sharpens it.`;
+
+const QUESTIONS = [
+  { id: 'teamSize', text: 'Are you working solo or with a partner?', type: 'cards', options: [
+    { value: 1, icon: '1', label: 'Solo', desc: 'Just me' },
+    { value: 2, icon: '2', label: 'Duo', desc: 'Two of us' }
+  ]},
+  { id: 'yourSkills', text: 'What are your technical skills?', type: 'multi', options: [
+    'Product / PM', 'Design / UX', 'Frontend', 'Mobile', 'Backend',
+    'APIs & integrations', 'Databases', 'Scraping & automation',
+    'Data engineering', 'DevOps', 'AI / ML', 'NLP / LLMs',
+    'Computer vision', 'Security', 'Systems programming', 'Hardware / IoT'
+  ]},
+  { id: 'partnerSkills', text: "What are your partner's skills?", type: 'multi', condition: () => answers.teamSize === 2, options: [
+    'Product / PM', 'Design / UX', 'Frontend', 'Mobile', 'Backend',
+    'APIs & integrations', 'Databases', 'Scraping & automation',
+    'Data engineering', 'DevOps', 'AI / ML', 'NLP / LLMs',
+    'Computer vision', 'Security', 'Systems programming', 'Hardware / IoT'
+  ]},
+  { id: 'domains', text: 'What domains interest you?', type: 'multi', freeform: true, freeformPlaceholder: 'Other domain, e.g. "Insurance", "Logistics"...', options: [
+    'Healthcare', 'Education', 'Finance', 'Developer tools',
+    'Productivity', 'Creative / art', 'Environment', 'Legal',
+    'Social impact', 'E-commerce', 'Gaming', 'Music / audio',
+    'Real estate', 'HR / recruiting', 'Security', 'Agriculture',
+    'Travel', 'Food / restaurant', 'Fitness / sports', 'Science / research'
+  ]},
+  { id: 'vibe', text: 'What kind of project excites you most?', type: 'cards', options: [
+    { value: 'demo', icon: '\u{1F3AA}', label: 'Fun to demo', desc: 'Wow factor, visual, interactive' },
+    { value: 'useful', icon: '\u{1F6E0}', label: 'Genuinely useful', desc: 'Solves a real problem' },
+    { value: 'technical', icon: '\u26A1', label: 'Technically deep', desc: 'Impressive engineering' },
+    { value: 'impact', icon: '\u{1F30D}', label: 'Social impact', desc: 'Helps people or communities' }
+  ]},
+  { id: 'scope', text: 'How ambitious do you want to go?', type: 'cards', options: [
+    { value: 'simple', icon: '\u{1F3AF}', label: 'Keep it tight', desc: 'Polished & focused' },
+    { value: 'medium', icon: '\u{1F4E6}', label: 'Medium scope', desc: 'A few moving parts' },
+    { value: 'big', icon: '\u{1F680}', label: 'Go big', desc: 'Ambitious, even if rough' },
+    { value: 'unsure', icon: '\u{1F937}', label: 'Not sure', desc: 'Surprise me' }
+  ]},
+  { id: 'ps_pref', text: 'Any preference on problem statement?', type: 'cards', options: [
+    { value: 'any', icon: '\u{1F3B2}', label: 'No preference', desc: 'Show me everything' },
+    { value: 1, icon: '\u{1F527}', label: 'Should exist', desc: 'Eliminate busywork' },
+    { value: 2, icon: '\u{1F513}', label: 'Breaks barriers', desc: 'Democratize access' },
+    { value: 3, icon: '\u{1F9E0}', label: 'Amplifies judgment', desc: 'Human-in-the-loop AI' }
+  ]},
+  { id: 'ai_usage', text: 'How do you want to use AI in the project?', type: 'multi', options: [
+    'LLM text generation', 'Document analysis', 'Image / vision',
+    'Classification / scoring', 'Summarization', 'Code generation',
+    'Conversational UI (chat)', 'Search / retrieval (RAG)', 'Translation',
+    'Audio / speech', 'Recommendation engine', 'Data extraction'
+  ]},
+  { id: 'freeform', text: 'Anything else we should know?', type: 'freeform', placeholder: 'e.g. I have access to a medical dataset, we want something fun to demo on stage, I am really into music production, we already have an idea about legal tech...' }
+];
+
+function getVisibleQuestions() { return QUESTIONS.filter(q => !q.condition || q.condition()); }
+
+function renderQuestion() {
+  const visible = getVisibleQuestions();
+  const q = visible[currentQ];
+  const total = visible.length;
+  document.getElementById('progress-fill').style.width = ((currentQ) / total * 100) + '%';
+  document.getElementById('q-number').textContent = `Question ${currentQ + 1} of ${total}`;
+  document.getElementById('q-text').textContent = q.text;
+  const body = document.getElementById('q-body');
+  const selected = answers[q.id] || (q.type === 'multi' ? [] : null);
+
+  if (q.type === 'cards') {
+    body.innerHTML = `<div class="choice-cards">${q.options.map(o => `
+      <div class="choice-card ${selected === o.value ? 'selected' : ''}" onclick="selectCard('${q.id}', ${typeof o.value === 'string' ? "'" + o.value + "'" : o.value})">
+        <div class="card-icon">${o.icon}</div>
+        <div class="card-label">${o.label}</div>
+        <div class="card-desc">${o.desc}</div>
+      </div>`).join('')}</div>`;
+  } else if (q.type === 'multi') {
+    body.innerHTML = `<div class="q-options">${q.options.map(o => `
+      <span class="chip ${selected.includes(o) ? 'selected' : ''}" onclick="toggleMulti('${q.id}', '${o}', this)">${o}</span>`).join('')}
+      ${q.freeform ? `<span class="chip freeform-chip">
+        <input type="text" id="freeform-input" placeholder="Add another" onkeydown="if(event.key==='Enter'){event.preventDefault();addFreeform('${q.id}')}" style="background:none;border:none;color:#ccc;outline:none;font-size:0.9rem;width:180px;font-family:inherit;">
+      </span>` : ''}
+      </div>`;
+  } else if (q.type === 'freeform') {
+    body.innerHTML = `<div style="width:90vw;max-width:750px"><textarea id="freeform-area" rows="10" placeholder="${q.placeholder || ''}" style="width:100%;min-height:280px;font-size:1rem">${selected || ''}</textarea></div>`;
+    setTimeout(() => {
+      const ta = document.getElementById('freeform-area');
+      if (ta) ta.addEventListener('input', () => { answers[q.id] = ta.value; });
+    }, 0);
+  }
+
+  const nav = document.getElementById('q-nav');
+  const isLast = currentQ === total - 1;
+  const canProceed = q.type === 'freeform' ? true : q.type === 'multi' ? (selected && selected.length > 0) : selected !== null;
+  if (q.type === 'cards') {
+    nav.innerHTML = currentQ > 0 ? '<button class="btn btn-secondary" onclick="prevQuestion()">Back</button>' : '';
+  } else {
+    nav.innerHTML = `
+      ${currentQ > 0 ? '<button class="btn btn-secondary" onclick="prevQuestion()">Back</button>' : ''}
+      <button class="btn btn-primary" ${canProceed ? '' : 'disabled'} onclick="${isLast ? 'finishInterview()' : 'nextQuestion()'}">
+        ${isLast ? 'Generate ideas with Claude' : 'Next'}
+      </button>`;
+  }
+}
+
+function selectCard(qId, value) {
+  answers[qId] = value;
+  renderQuestion();
+  setTimeout(() => { const v = getVisibleQuestions(); if (currentQ < v.length - 1) nextQuestion(); else renderQuestion(); }, 300);
+}
+
+function toggleMulti(qId, value, el) {
+  if (!answers[qId]) answers[qId] = [];
+  const idx = answers[qId].indexOf(value);
+  if (idx >= 0) answers[qId].splice(idx, 1); else answers[qId].push(value);
+  el.classList.toggle('selected');
+  const nav = document.getElementById('q-nav');
+  const btn = nav.querySelector('.btn-primary');
+  if (btn) btn.disabled = !answers[qId].length;
+}
+
+function addFreeform(qId) {
+  const input = document.getElementById('freeform-input');
+  const val = input.value.trim();
+  if (!val) return;
+  if (!answers[qId]) answers[qId] = [];
+  if (!answers[qId].includes(val)) { answers[qId].push(val); const q = QUESTIONS.find(q => q.id === qId); if (q && !q.options.includes(val)) q.options.push(val); }
+  input.value = '';
+  renderQuestion();
+}
+
+function nextQuestion() { const v = getVisibleQuestions(); if (currentQ < v.length - 1) { currentQ++; renderQuestion(); } }
+function prevQuestion() { if (currentQ > 0) { currentQ--; renderQuestion(); } }
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`sec-${name}`).classList.add('active');
+  document.getElementById('phase-interview').className = name === 'interview' ? 'active' : 'done';
+  document.getElementById('phase-explore').className = name === 'explore' ? 'active' : (name === 'summary' ? 'done' : '');
+  document.getElementById('phase-shortlist').className = name === 'summary' ? 'active' : '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restartInterview() { currentQ = 0; Object.keys(answers).forEach(k => delete answers[k]); showSection('interview'); renderQuestion(); }
+
+async function finishInterview() {
+  showSection('explore');
+  await generateIdeas();
+}
+
+// ── Server API call ──
+async function callClaude(prompt) {
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+  return data.text;
+}
+
+function buildProfileSummary() {
+  const skills = [...(answers.yourSkills || []), ...(answers.partnerSkills || [])];
+  const vibeMap = { demo: 'fun to demo, wow factor', useful: 'genuinely useful, solves real problems', technical: 'technically deep, impressive engineering', impact: 'social impact, helps people' };
+  const scopeMap = { simple: 'keep it tight and polished', medium: 'medium scope, a few moving parts', big: 'go big and ambitious' };
+  const psMap = { any: 'no preference', 1: 'Should exist', 2: 'Breaks barriers', 3: 'Amplifies judgment' };
+  return `TEAM PROFILE:
+- Team size: ${answers.teamSize === 1 ? 'Solo' : 'Duo (2 people)'}
+- Combined technical skills: ${skills.join(', ') || 'not specified'}
+- Domains of interest: ${(answers.domains || []).join(', ') || 'not specified'}
+- Project vibe: ${vibeMap[answers.vibe] || 'not specified'}
+- Ambition level: ${scopeMap[answers.scope] || 'not specified'}
+- Problem statement preference: ${psMap[answers.ps_pref] || 'not specified'}
+- AI usage interests: ${(answers.ai_usage || []).join(', ') || 'not specified'}
+${answers.freeform ? `- Additional context: ${answers.freeform}` : ''}
+- Budget: $500 Anthropic credits per person (${answers.teamSize === 1 ? '$500' : '$1000'} total)`;
+}
+
+function showLoading(msg, sub) {
+  document.getElementById('ideas-container').innerHTML = `<div class="loading-wrap"><div class="spinner"></div><p>${msg}</p><p class="loading-sub">${sub || 'This usually takes 10-20 seconds'}</p></div>`;
+}
+
+async function generateIdeas() {
+  const maxIdeaCap = 45;
+  const remaining = maxIdeaCap - allIdeas.length;
+  if (remaining <= 0) return;
+  const batchSize = Math.min(15, remaining);
+  const existingNames = allIdeas.map(i => i.name);
+  const avoidClause = existingNames.length > 0 ? `\n\nDo NOT repeat these ideas that were already generated: ${existingNames.join(', ')}` : '';
+
+  const prompt = `${HACKATHON_CONTEXT}\n\n${buildProfileSummary()}${avoidClause}
+
+Generate exactly ${batchSize} hackathon project ideas tailored to this team's skills, interests, and preferences. For each idea, carefully score how well it would fit EACH of the three problem statements if implemented perfectly (1-5 stars). Also identify which single problem statement it fits BEST (ps: 1, 2, or 3).
+
+Be creative, specific, and practical. Consider what's actually buildable in a hackathon with the team's skills and Anthropic API credits. Ideas should feel fresh and exciting, not generic.
+
+For each idea:
+- "name" should be a short one-liner summary in body case (e.g. "Plain-language contract translator", not "LegalEase: Plain-English Contract Translator")
+- "desc" should be a clear, compelling 2-3 sentence description explaining what the tool does and why someone would want it
+
+Return ONLY a JSON array (no markdown, no backticks, no explanation) with this exact schema:
+[{"name":"string (short one-liner, body case)","desc":"string (2-3 sentences)","ps":1,"s1":4,"s2":3,"s3":2,"w1":"1 sentence: why this score for Should Exist","w2":"1 sentence: why this score for Break Barriers","w3":"1 sentence: why this score for Amplify Judgment"}]`;
+
+  isGenerating = true;
+  if (allIdeas.length === 0) currentIdeaIdx = 0;
+  totalExpected = allIdeas.length + batchSize;
+  renderIdeas();
+
+  try {
+    const res = await fetch('/api/generate-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const msg = JSON.parse(line.slice(6));
+          if (msg.error) throw new Error(msg.error);
+          if (msg.idea) {
+            const wasWaiting = currentIdeaIdx >= allIdeas.length || !allIdeas[currentIdeaIdx];
+            allIdeas.push(msg.idea);
+            if (wasWaiting) renderIdeas();
+          }
+        } catch (e) { if (e.message && !e.message.includes('JSON')) throw e; }
+      }
+    }
+
+    isGenerating = false;
+    totalExpected = allIdeas.length;
+    renderIdeas();
+  } catch (e) {
+    isGenerating = false;
+    totalExpected = allIdeas.length;
+    document.getElementById('ideas-container').innerHTML = `<div class="error-box">Error: ${e.message}</div>`;
+    renderIdeas();
+  }
+}
+
+function renderIdeas() {
+  const container = document.getElementById('ideas-container');
+  const nav = document.getElementById('idea-nav');
+  const bottomActions = document.getElementById('ideas-bottom-actions');
+  const displayTotal = isGenerating ? totalExpected : allIdeas.length;
+  if (displayTotal === 0) { container.innerHTML = ''; nav.style.display = 'none'; bottomActions.style.display = 'none'; return; }
+  if (currentIdeaIdx >= displayTotal) currentIdeaIdx = displayTotal - 1;
+  if (currentIdeaIdx < 0) currentIdeaIdx = 0;
+  nav.style.display = 'flex';
+  document.getElementById('idea-counter').textContent = `${currentIdeaIdx + 1} of ${displayTotal}`;
+  const arrows = nav.querySelectorAll('.nav-arrow');
+  arrows[0].disabled = currentIdeaIdx === 0;
+  const maxIdx = isGenerating ? totalExpected - 1 : allIdeas.length - 1;
+  arrows[1].disabled = currentIdeaIdx >= maxIdx;
+
+  if (currentIdeaIdx >= allIdeas.length || !allIdeas[currentIdeaIdx]) {
+    container.innerHTML = `<div style="text-align:center;margin-bottom:20px"><p style="color:#ccc;font-size:1.1rem;font-weight:600;margin-bottom:4px">Generating ideas</p><p style="color:#666;font-size:0.85rem">Claude is crafting tailored ideas based on your profile</p></div><div class="idea-card skeleton">
+      <div class="skel-line" style="width:100px;height:22px;margin-bottom:12px"></div>
+      <div class="skel-line" style="width:70%;height:20px;margin-bottom:16px"></div>
+      <div class="skel-line" style="width:100%;height:14px;margin-bottom:6px"></div>
+      <div class="skel-line" style="width:90%;height:14px;margin-bottom:6px"></div>
+      <div class="skel-line" style="width:60%;height:14px;margin-bottom:20px"></div>
+      <div style="display:flex;gap:10px">
+        <div class="skel-line" style="width:80px;height:30px;border-radius:8px"></div>
+        <div class="skel-line" style="width:80px;height:30px;border-radius:8px"></div>
+        <div class="skel-line" style="width:80px;height:30px;border-radius:8px"></div>
+      </div>
+    </div>`;
+    bottomActions.style.display = 'none';
+    return;
+  }
+  const idea = allIdeas[currentIdeaIdx];
+  const isShortlisted = shortlist.some(s => s.name === idea.name);
+  container.innerHTML = `<div class="idea-card">
+    <h3>${idea.name}</h3>
+    <p class="desc">${idea.desc}</p>
+    <div class="scores">
+      <div class="score-item"><div class="label">Should exist</div><div class="stars">${stars(idea.s1)}</div>${idea.w1 ? `<div class="tooltip">${idea.w1}</div>` : ''}</div>
+      <div class="score-item"><div class="label">Breaks barriers</div><div class="stars">${stars(idea.s2)}</div>${idea.w2 ? `<div class="tooltip">${idea.w2}</div>` : ''}</div>
+      <div class="score-item"><div class="label">Amplifies judgment</div><div class="stars">${stars(idea.s3)}</div>${idea.w3 ? `<div class="tooltip">${idea.w3}</div>` : ''}</div>
+    </div>
+    <div class="idea-actions">
+      <button class="btn btn-secondary" onclick="dismissIdea(${currentIdeaIdx})">Dismiss</button>
+      <button class="btn ${isShortlisted ? 'btn-success' : 'btn-primary'}" onclick="toggleShortlistIdea(${currentIdeaIdx})">${isShortlisted ? 'Shortlisted' : 'Shortlist'}</button>
+    </div>
+  </div>`;
+
+  // Bottom actions: show when not generating
+  if (!isGenerating) {
+    const maxIdeaCap = 45;
+    const remaining = maxIdeaCap - allIdeas.length;
+    let btns = '';
+    if (remaining > 0) {
+      const batch = Math.min(15, remaining);
+      btns += `<button class="btn btn-ghost" onclick="addMoreIdeas()">Generate ${batch} more</button>`;
+    }
+    if (allIdeas.length < maxIdeaCap) btns += `<button class="btn btn-ghost" onclick="openCustomModal()">Enter your own idea</button>`;
+    bottomActions.innerHTML = btns;
+    bottomActions.style.display = btns ? 'flex' : 'none';
+  } else {
+    bottomActions.style.display = 'none';
+  }
+}
+
+function stars(n) { return '<span style="color:#ffd700">'+'&#9733;'.repeat(n)+'</span><span style="color:#333">'+'&#9733;'.repeat(5-n)+'</span>'; }
+
+function nextIdea() { const max = isGenerating ? totalExpected - 1 : allIdeas.length - 1; if (currentIdeaIdx < max) { currentIdeaIdx++; renderIdeas(); } }
+function prevIdea() { if (currentIdeaIdx > 0) { currentIdeaIdx--; renderIdeas(); } }
+function advanceIdea() { if (currentIdeaIdx < allIdeas.length - 1) currentIdeaIdx++; renderIdeas(); }
+
+function toggleShortlistIdea(idx) { const idea = allIdeas[idx]; const i = shortlist.findIndex(s => s.name === idea.name); if (i >= 0) { shortlist.splice(i, 1); renderIdeas(); renderShortlist(); } else { shortlist.push(idea); renderShortlist(); advanceIdea(); } }
+let lastDismissed = null;
+let undoTimer = null;
+function dismissIdea(idx) {
+  lastDismissed = { idea: allIdeas[idx], idx };
+  shortlist = shortlist.filter(s => s.name !== allIdeas[idx].name);
+  allIdeas.splice(idx, 1);
+  totalExpected = Math.max(totalExpected - 1, allIdeas.length);
+  renderIdeas(); renderShortlist();
+  const toast = document.getElementById('undo-toast');
+  toast.style.display = 'flex';
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => { toast.style.display = 'none'; lastDismissed = null; }, 5000);
+}
+function undoDismiss() {
+  if (!lastDismissed) return;
+  allIdeas.splice(lastDismissed.idx, 0, lastDismissed.idea);
+  totalExpected++;
+  currentIdeaIdx = lastDismissed.idx;
+  lastDismissed = null;
+  clearTimeout(undoTimer);
+  document.getElementById('undo-toast').style.display = 'none';
+  renderIdeas();
+}
+
+async function addMoreIdeas() { await generateIdeas(); }
+
+function openCustomModal() { document.getElementById('custom-modal').style.display = 'flex'; }
+function closeCustomModal() { document.getElementById('custom-modal').style.display = 'none'; }
+
+async function scoreCustomIdea() {
+  if (allIdeas.length >= 45) return alert('Maximum of 45 ideas reached.');
+  const desc = document.getElementById('custom-desc').value.trim();
+  if (!desc) return alert('Please describe your idea.');
+  document.getElementById('custom-desc').value = '';
+  closeCustomModal();
+  // Show skeleton at position 0 while scoring
+  isGenerating = true;
+  allIdeas.unshift(null); // placeholder
+  totalExpected = allIdeas.length;
+  currentIdeaIdx = 0;
+  renderIdeas();
+  const prompt = `${HACKATHON_CONTEXT}\n\n${buildProfileSummary()}\n\nThe user has their own hackathon idea. Score it against the three problem statements and provide feedback.\n\nUSER'S IDEA: ${desc}\n\nReturn ONLY a JSON object (no markdown, no backticks) with this schema:\n{"name":"string (short one-liner summary, body case)","desc":"string (improved 2-3 sentence description)","ps":1,"s1":4,"s2":3,"s3":2,"w1":"1 sentence: why this score for Should Exist","w2":"1 sentence: why this score for Break Barriers","w3":"1 sentence: why this score for Amplify Judgment"}`;
+  try {
+    const text = await callClaude(prompt);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON found');
+    const idea = JSON.parse(match[0]);
+    idea.custom = true;
+    allIdeas[0] = idea;
+  } catch (e) {
+    allIdeas.shift(); // remove placeholder on error
+    alert('Error scoring idea: ' + e.message);
+  }
+  isGenerating = false;
+  totalExpected = allIdeas.length;
+  renderIdeas();
+}
+
+function renderShortlist() { document.getElementById('shortlist-count').textContent = shortlist.length; }
+function removeFromShortlist(i) { shortlist.splice(i, 1); renderIdeas(); }
+
+function goToSummary() {
+  if (!shortlist.length) return alert('Shortlist at least one idea first!');
+  const ranked = [...shortlist].sort((a,b) => (b.s1+b.s2+b.s3)-(a.s1+a.s2+a.s3));
+  const psLabels = { 1: 'Should exist', 2: 'Breaks barriers', 3: 'Amplifies judgment' };
+  document.getElementById('summary-container').innerHTML = ranked.map((idea, i) => {
+    const total = idea.s1+idea.s2+idea.s3;
+    return `<div class="summary-card" ${i===0?'style="border-color:#ffd700;border-width:2px"':''}><div class="rank">#${i+1}</div><div>
+      <h3 style="margin:6px 0 4px">${idea.name}</h3>
+      <p style="color:#aaa;font-size:0.85rem;margin-bottom:12px">${idea.desc}</p>
+      <div class="scores">
+        <div class="score-item"><div class="label">Should exist</div><div class="stars">${stars(idea.s1)}</div></div>
+        <div class="score-item"><div class="label">Breaks barriers</div><div class="stars">${stars(idea.s2)}</div></div>
+        <div class="score-item"><div class="label">Amplifies judgment</div><div class="stars">${stars(idea.s3)}</div></div>
+      </div>
+      <div class="total-score">Total: ${total}/15</div>
+    </div><div style="clear:both"></div></div>`;
+  }).join('');
+  showSection('summary');
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
