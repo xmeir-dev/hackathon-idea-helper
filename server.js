@@ -44,6 +44,9 @@ app.post('/api/generate-stream', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
+  if (res.socket) res.socket.setNoDelay(true);
+  // Padding to push past proxy buffer thresholds
+  res.write(`: ${' '.repeat(4096)}\n\n`);
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -120,7 +123,7 @@ app.post('/api/generate-stream', async (req, res) => {
                 const idea = JSON.parse(objStr);
                 if (idea.name && idea.desc) {
                   sentCount++;
-                  res.write(`data: ${JSON.stringify({ idea })}\n\n`);
+                  res.write(`data: ${JSON.stringify({ idea })}\n\n: ${' '.repeat(4096)}\n\n`);
                   if (sentCount >= maxIdeas) break outer;
                 }
               } catch (_) { /* incomplete JSON, skip */ }
