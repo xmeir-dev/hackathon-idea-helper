@@ -413,7 +413,9 @@ async function generateIdeas() {
 
   const prompt = `${HACKATHON_CONTEXT}\n\n${buildProfileSummary()}${avoidClause}
 
-Generate exactly ${batchSize} hackathon project ideas tailored to this team's skills, interests, and preferences. For each idea, carefully score how well it would fit EACH of the three problem statements if implemented perfectly (1-5 stars). Also identify which single problem statement it fits BEST (ps: 1, 2, or 3).
+Generate exactly ${batchSize} hackathon project ideas tailored to this team's skills, interests, and preferences. Your PRIMARY GOAL is to find ideas that score as high as possible across ALL THREE problem statements — ideally 4-5 stars on each. Think hard about ideas that sit at the intersection of all three: a tool that should exist, that breaks barriers by democratizing access, AND that amplifies human judgment. At least half the ideas should have no score below 4. Be ambitious — a 5/5/5 idea is possible if you think creatively about the overlap.
+
+Score honestly but optimistically — if an idea could plausibly achieve a high score with good execution, give it credit. Also identify which single problem statement it fits BEST (ps: 1, 2, or 3).
 
 Be creative, specific, and practical. Consider what's actually buildable in a hackathon with the team's skills and Anthropic API credits. Ideas should feel fresh and exciting, not generic.
 
@@ -499,7 +501,8 @@ function renderIdeas() {
         <div class="skel-line" style="width:80px;height:30px;border-radius:8px"></div>
       </div>
     </div>`;
-    bottomActions.style.display = 'none';
+    bottomActions.innerHTML = `<button class="btn btn-ghost" onclick="openCustomModal()">Enter your own idea</button>`;
+    bottomActions.style.display = 'flex';
     return;
   }
   const idea = allIdeas[currentIdeaIdx];
@@ -518,21 +521,19 @@ function renderIdeas() {
     </div>
   </div>`;
 
-  // Bottom actions: show when not generating
+  // Bottom actions
+  const maxIdeaCap = 45;
+  let btns = '';
   if (!isGenerating) {
-    const maxIdeaCap = 45;
     const remaining = maxIdeaCap - allIdeas.length;
-    let btns = '';
     if (remaining > 0) {
       const batch = Math.min(15, remaining);
       btns += `<button class="btn btn-ghost" onclick="addMoreIdeas()">Generate ${batch} more</button>`;
     }
-    if (allIdeas.length < maxIdeaCap) btns += `<button class="btn btn-ghost" onclick="openCustomModal()">Enter your own idea</button>`;
-    bottomActions.innerHTML = btns;
-    bottomActions.style.display = btns ? 'flex' : 'none';
-  } else {
-    bottomActions.style.display = 'none';
   }
+  if (allIdeas.length < maxIdeaCap) btns += `<button class="btn btn-ghost" onclick="openCustomModal()">Enter your own idea</button>`;
+  bottomActions.innerHTML = btns;
+  bottomActions.style.display = btns ? 'flex' : 'none';
 }
 
 function stars(n) { return '<span style="color:#ffd700">'+'&#9733;'.repeat(n)+'</span><span style="color:#333">'+'&#9733;'.repeat(5-n)+'</span>'; }
